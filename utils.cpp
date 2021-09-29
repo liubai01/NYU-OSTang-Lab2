@@ -2,20 +2,27 @@
 
 string getMyCwd() {
     char tmp[256];
+
     getcwd(tmp, 256);
     string ret(tmp);
+
     return ret;
 }
 
-vector<string> splitCwd(string s, string delimiter) {
+vector<string> splitStr(string s, string delimiter) {
     vector<string> ret;
-
-	size_t pos = 0;
-	string token;
-    while ((pos = s.find(delimiter)) != std::string::npos) {
-        token = s.substr(0, pos);
-        ret.push_back(token);
-        s.erase(0, pos + delimiter.length());
+    
+    auto start = 0U;
+    auto end = s.find(delimiter);
+    while (end != std::string::npos)
+    {
+        ret.push_back(s.substr(start, end - start));
+        start = end + delimiter.length();
+        end = s.find(delimiter, start);
+    }
+    if (start < s.length())
+    {
+        ret.push_back(s.substr(start, s.length() - start + 1));
     }
 
     return ret;

@@ -4,12 +4,16 @@ CFLAGS= -lstdc++
 .PHONY: all
 all: nyush
 
-nyush: nyush.o utils.o
+nyush: nyush.o utils.o LsCmd.o CmdBase.o
 	$(CC) -o $@ $^ $(CFLAGS)
 
-nyush.o: nyush.cpp nyush.hpp
+nyush.o: nyush.cpp
 
 utils.o: utils.cpp utils.hpp
+
+LsCmd.o: LsCmd.cpp LsCmd.hpp
+
+CmdBase.o: CmdBase.cpp CmdBase.hpp
 
 .PHONY: clean
 clean:

@@ -9,7 +9,8 @@ using namespace std;
 
 // get current working directory
 string getMyCwd();
+
 // split the working directory into vector
-vector<string> splitCwd(string s, string delimiter);
+vector<string> splitStr(string s, string delimiter);
 
 #endif 
