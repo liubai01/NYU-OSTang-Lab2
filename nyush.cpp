@@ -11,9 +11,9 @@ int main() {
     string cmd;
     vector<string> args;
 
-    // command multiplexer initialization
+    // built-in command multiplexer initialization
     unordered_map<string, CmdBase*> mlt;
-    vector<CmdBase*> cmds = {new LsCmd()};
+    vector<CmdBase*> cmds = {new CdCmd()};
 
     for (auto& c: cmds)
     {
@@ -28,7 +28,7 @@ int main() {
         vector<string> cwdTokens = splitStr(cwd, "/");
         string currDir = cwdTokens[cwdTokens.size() - 1];
 
-        // get the command
+        // prompt
         cout << "[nyush " << currDir << "]$: ";
         getline(cin, cmd);
 
@@ -46,7 +46,7 @@ int main() {
         {
             f->second->execCmd(args);
         } else {
-            cout << "Command Not Found!" << endl;
+            execute(args);
         }
 
     }

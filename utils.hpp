@@ -2,7 +2,6 @@
 #define UTILS_H
 
 #include<iostream>
-#include <unistd.h>
 #include <vector>
 
 using namespace std;
@@ -12,5 +11,9 @@ string getMyCwd();
 
 // split the working directory into vector
 vector<string> splitStr(string s, string delimiter);
+
+int changedir(string path);
+
+int execute(vector<string>& arglist);
 
 #endif 
