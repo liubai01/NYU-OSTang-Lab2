@@ -1,20 +1,26 @@
 CC=gcc
-CFLAGS= -lstdc++ 
+CFLAGS=-lstdc++ 
+SOURCEDIR = src
+BUILDDIR = build
 
 .PHONY: all
 all: nyush
 
 nyush: nyush.o utils.o CdCmd.o CmdBase.o
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $(addprefix $(BUILDDIR)/,$^) $(CFLAGS)
 
-nyush.o: nyush.cpp
+nyush.o: $(SOURCEDIR)/nyush.cpp
+	$(CC) -c -o $(BUILDDIR)/$@ $^ $(CFLAGS)
 
-utils.o: utils.cpp utils.hpp
+utils.o: $(SOURCEDIR)/utils.cpp $(SOURCEDIR)/utils.hpp
+	$(CC) -c -o $(BUILDDIR)/$@ $< $(CFLAGS)
 
-CdCmd.o: CdCmd.cpp CdCmd.hpp
+CdCmd.o: $(SOURCEDIR)/CdCmd.cpp $(SOURCEDIR)/CdCmd.hpp
+	$(CC) -c -o $(BUILDDIR)/$@ $< $(CFLAGS)
 
-CmdBase.o: CmdBase.cpp CmdBase.hpp
+CmdBase.o: $(SOURCEDIR)/CmdBase.cpp $(SOURCEDIR)/CmdBase.hpp
+	$(CC) -c -o $(BUILDDIR)/$@ $< $(CFLAGS)
 
 .PHONY: clean
 clean:
-	rm -f *.o nyush
+	rm -f $(BUILDDIR)/*.o nyush
