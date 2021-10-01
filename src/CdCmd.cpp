@@ -4,7 +4,7 @@
 
 using namespace std;
 
-CdCmd::CdCmd()
+CdCmd::CdCmd(ShellStatus* status):CmdBase(status)
 {
 	this->cmd = "cd";
 }

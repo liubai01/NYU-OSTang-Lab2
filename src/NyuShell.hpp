@@ -6,10 +6,9 @@
 #include <unordered_set>
 #include "cmd"
 #include <sys/wait.h>
+#include "ShellStatus.hpp"
 
 using namespace std;
-
-#define REGISTERCMD(X) cmds.push_back(new X())
 
 
 class NyuShell {
@@ -20,6 +19,8 @@ public:
     vector<CmdBase*> cmds;
     // cpid list
     unordered_set<pid_t> cpids;
+    // shell status
+    ShellStatus status;
 
 
     NyuShell();

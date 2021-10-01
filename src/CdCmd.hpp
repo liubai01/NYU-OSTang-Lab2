@@ -6,7 +6,7 @@
 class CdCmd: public CmdBase
 {
 public:
-	CdCmd();
+	CdCmd(ShellStatus* status);
 
 	void execCmd(const vector<string>& args);
 

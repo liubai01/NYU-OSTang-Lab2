@@ -5,17 +5,21 @@
 
 using namespace std;
 
-#define REGISTERSHELLCMD(X) cmds.push_back(new X())
+#define REGISTERSHELLCMD(X) cmds.push_back(new X(&status))
 
 NyuShell::NyuShell()
 {
     // built-in command multiplexer initialization
     REGISTERSHELLCMD(CdCmd);
+    REGISTERSHELLCMD(ExitCmd);
 
     for (auto& c: cmds)
     {
         mlt[c->cmd] = c;
     }
+
+    // initialize status
+    status.hasSuspendedJob = false;
 }
 
 NyuShell::~NyuShell()
@@ -60,6 +64,8 @@ void NyuShell::serve()
             pid_t cpid = execute(args);
             // register in lists
             cpids.insert(cpid);
+            status.hasSuspendedJob = cpids.size() > 0;
+
             waitUntilClear();
 
         }
@@ -74,6 +80,8 @@ void NyuShell::waitUntilClear()
         int status;
         pid_t ret = wait(&status);
         cpids.erase(ret);
+        this->status.hasSuspendedJob = cpids.size() > 0;
+
         if (ret == -1) {
             if (errno == ECHILD) break;
         } else {
