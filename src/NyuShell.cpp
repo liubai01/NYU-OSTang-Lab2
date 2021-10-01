@@ -37,22 +37,12 @@ void NyuShell::serve()
 	// main loop
     for(;;)
     {
-        // current working directory stuff
-        string cwd = getMyCwd();
-        vector<string> cwdTokens = splitStr(cwd, "/");
-        string currDir = cwdTokens[cwdTokens.size() - 1];
+        args = prompt();
 
-        // prompt
-        cout << "[nyush " << currDir << "]$: ";
-        getline(cin, cmd);
-
-        // parse the command
-        args.clear();
-        if (cmd.size() == 0)
+        if (args.size() == 0)
         {
             continue;
         }
-        args = splitStr(cmd, " ");
         
         // exec the built-in command
         auto f = mlt.find(args[0]);
@@ -60,17 +50,44 @@ void NyuShell::serve()
         {
             f->second->execCmd(args);
         } else {
-        	// exec the general id
+        	// exec outside commands
+
             pid_t cpid = execute(args);
-            // register in lists
+
+            // register child's pid
             cpids.insert(cpid);
             status.hasSuspendedJob = cpids.size() > 0;
 
             waitUntilClear();
-
         }
 
     }
+}
+
+vector<string> NyuShell::prompt()
+{
+	vector<string> args;
+	string cmd;
+
+    // current working directory stuff
+    string cwd = getMyCwd();
+    vector<string> cwdTokens = splitStr(cwd, "/");
+    string currDir = cwdTokens[cwdTokens.size() - 1];
+
+    // prompt
+    cout << "[nyush " << currDir << "]$: ";
+    getline(cin, cmd);
+
+    if (cmd.length() == 0)
+    {
+    	return {};
+    }
+
+    // parse the command
+    args.clear();
+    args = splitStr(cmd, " ");
+
+    return args;
 }
 
 void NyuShell::waitUntilClear()

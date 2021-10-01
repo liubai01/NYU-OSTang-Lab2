@@ -22,13 +22,16 @@ public:
     // shell status
     ShellStatus status;
 
-
     NyuShell();
     ~NyuShell();
 
-    void serve();
     // wait all children process and main cpids list
     void waitUntilClear();
+    // output prompt and parse the input
+    vector<string> prompt();
+
+    // start the shell service
+    void serve();
 };
 
 

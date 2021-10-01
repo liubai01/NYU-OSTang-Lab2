@@ -10,11 +10,15 @@ using namespace std;
 // get current working directory
 string getMyCwd();
 
-// split the working directory into vector
+// split the working directory / cmd into vector
 vector<string> splitStr(string s, string delimiter);
 
 int changedir(string path);
 
+// a cpp wrapper of execvp
 pid_t execute(vector<string>& arglist);
+
+inline void redirInput(string inputFile);
+inline void redirOutput(string outputFile, bool bAppend);
 
 #endif 
