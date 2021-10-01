@@ -1,15 +1,16 @@
 #include "NyuShell.hpp"
-
 #include<iostream>
 #include <unistd.h>
 #include "utils.hpp"
 
 using namespace std;
 
+#define REGISTERCMD(X) cmds.push_back(new X())
+
 NyuShell::NyuShell()
 {
     // built-in command multiplexer initialization
-    cmds.push_back(new CdCmd());
+    REGISTERCMD(CdCmd);
 
     for (auto& c: cmds)
     {
@@ -49,14 +50,37 @@ void NyuShell::serve()
         }
         args = splitStr(cmd, " ");
         
-        // exec the command
+        // exec the built-in command
         auto f = mlt.find(args[0]);
         if (f != mlt.end())
         {
             f->second->execCmd(args);
         } else {
-            execute(args);
+        	// exec the general id
+            pid_t cpid = execute(args);
+            // register in lists
+            cpids.insert(cpid);
+            waitUntilClear();
+
         }
 
+    }
+}
+
+void NyuShell::waitUntilClear()
+{
+    while (true) {
+        // by reference to https://stackoverflow.com/questions/279729/how-to-wait-until-all-child-processes-called-by-fork-complete
+        int status;
+        pid_t ret = wait(&status);
+        cpids.erase(ret);
+        if (ret == -1) {
+            if (errno == ECHILD) break;
+        } else {
+            if (WEXITSTATUS(status) != 0 || !WIFEXITED(status)) {
+                cerr << "pid " << ret << " failed" << endl;
+                exit(1);
+            }
+        }
     }
 }

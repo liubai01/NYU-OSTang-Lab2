@@ -3,6 +3,7 @@
 
 #include<iostream>
 #include <vector>
+#include <unistd.h>
 
 using namespace std;
 
@@ -14,6 +15,6 @@ vector<string> splitStr(string s, string delimiter);
 
 int changedir(string path);
 
-int execute(vector<string>& arglist);
+pid_t execute(vector<string>& arglist);
 
 #endif 

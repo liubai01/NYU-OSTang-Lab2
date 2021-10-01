@@ -1,6 +1,5 @@
 #include "utils.hpp"
 #include <unistd.h>
-#include <sys/wait.h>
 
 string getMyCwd() 
 {
@@ -36,7 +35,7 @@ vector<string> splitStr(string s, string delimiter) {
     return ret;
 }
 
-int execute(vector<string>& arglist)
+pid_t execute(vector<string>& arglist)
 {
     int error;
 
@@ -58,24 +57,7 @@ int execute(vector<string>& arglist)
              cout << "failed\n" << endl;
         }
         exit(1);
-    } else {
-        while (true) {
-            // by reference to https://stackoverflow.com/questions/279729/how-to-wait-until-all-child-processes-called-by-fork-complete
-            int status;
-            pid_t ret = wait(&status);
-            if (ret == -1) {
-                if (errno == ECHILD) break;
-            } else {
-                if (WEXITSTATUS(status) != 0 || !WIFEXITED(status)) {
-                    cerr << "pid " << ret << " failed" << endl;
-                    exit(1);
-                }
-            }
-        }
     }
 
-
-
-       
-    return 0;
+    return c_pid;
 }
