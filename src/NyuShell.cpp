@@ -5,12 +5,12 @@
 
 using namespace std;
 
-#define REGISTERCMD(X) cmds.push_back(new X())
+#define REGISTERSHELLCMD(X) cmds.push_back(new X())
 
 NyuShell::NyuShell()
 {
     // built-in command multiplexer initialization
-    REGISTERCMD(CdCmd);
+    REGISTERSHELLCMD(CdCmd);
 
     for (auto& c: cmds)
     {
@@ -79,7 +79,7 @@ void NyuShell::waitUntilClear()
         } else {
             if (WEXITSTATUS(status) != 0 || !WIFEXITED(status)) {
                 cerr << "pid " << ret << " failed" << endl;
-                exit(1);
+                // exit(1);
             }
         }
     }

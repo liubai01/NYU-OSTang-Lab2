@@ -17,10 +17,13 @@ CdCmd::~CdCmd()
 
 void CdCmd::execCmd(const vector<string>& args)
 {
-	if(args.size() == 1) {
-		changedir("~/");
+	if(args.size() == 1 || args.size() > 2) {
+		cerr << "Error: invalid command" << endl;
 	} else {
-		changedir(args[1]);
+		if (changedir(args[1]) == -1)
+		{
+			cerr << "Error: invalid directory" << endl;
+		}
 	}
 	
 }
