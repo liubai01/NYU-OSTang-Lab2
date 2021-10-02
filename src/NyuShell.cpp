@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include "Job.hpp"
 
 using namespace std;
 
@@ -42,11 +43,14 @@ NyuShell::~NyuShell()
 void NyuShell::serve()
 {
     vector<string> tokens;
+    string cmd;
 
 	// main loop
     for(;;)
     {
-        tokens = prompt();
+
+        tokens = prompt(cmd);
+
 
         if (tokens.size() == 0)
         {
@@ -63,15 +67,19 @@ void NyuShell::serve()
             vector<SubProcess> subs(cmds.size());
             vector<int> cleanUpList;
 
+            Job j;
+            j.cmd = cmd;
+            j.subnum = cmds.size();
+
             if (constrcutSubProcess(cmds, cleanUpList, subs))
             {
                 continue;
             }
 
-            for (auto& j: subs)
+            for (auto& s: subs)
             {
                 pid_t cpid = fork();
-                j.pid = cpid;
+                s.pid = cpid;
                 
                 if (cpid == (pid_t) - 1)
                 {
@@ -80,20 +88,23 @@ void NyuShell::serve()
                 }
 
                 if (cpid == 0) {
-                    j.exec(cleanUpList);
+                    s.exec(cleanUpList);
                 }
-                status.registerSubProcess(j);
+                status.registerSubProcess(s, j);
             }
             for(auto& i: cleanUpList)
             {
                 close(i);
             }
 
+            status.registerJob(j);
 
-            status.debugPrint();
+            // status.debugPrint();
+            status.printJobs();
+
             waitUntilClear();
-            cout << "After" << endl;
-            status.debugPrint();
+            // cout << "After" << endl;
+            // status.debugPrint();
            
         }
 
@@ -188,10 +199,9 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
     return false;
 }
 
-vector<string> NyuShell::prompt()
+vector<string> NyuShell::prompt(string& cmd)
 {
 	vector<string> args;
-	string cmd;
 
     // current working directory stuff
     string cwd = getMyCwd();

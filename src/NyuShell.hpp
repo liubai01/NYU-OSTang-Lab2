@@ -27,7 +27,7 @@ public:
     // wait all children process and main cpids list
     void waitUntilClear();
     // output prompt and parse the input
-    vector<string> prompt();
+    vector<string> prompt(string& cmd);
 
     bool constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<SubProcess>& subs);
 

@@ -3,6 +3,7 @@
 
 #include<list>
 #include "SubProcess.hpp"
+#include "Job.hpp"
 #include <unistd.h>
 
 
@@ -12,12 +13,18 @@ class ShellStatus
 {
 public:
     list<SubProcess> subs;
+    list<Job> jobs;
+
     bool hasSuspendedJob;
 
-    void registerSubProcess(SubProcess& s);
+    void registerJob(Job& j);
+
+    void registerSubProcess(SubProcess& s, Job& j);
     void deleteSubProcess(pid_t pid);
 
     void debugPrint();
+
+    void printJobs();
 };
 
 #endif 
