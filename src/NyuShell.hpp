@@ -7,6 +7,7 @@
 #include "cmd"
 #include <sys/wait.h>
 #include "ShellStatus.hpp"
+#include "Job.hpp"
 
 using namespace std;
 
@@ -22,6 +23,8 @@ public:
     // shell status
     ShellStatus status;
 
+    int activeProcessNum;
+
     NyuShell();
     ~NyuShell();
 
@@ -29,6 +32,8 @@ public:
     void waitUntilClear();
     // output prompt and parse the input
     vector<string> prompt();
+
+    bool constrcutJobs(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<Job>& jobs);
 
     // start the shell service
     void serve();

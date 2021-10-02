@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-lstdc++ 
 SOURCEDIR = src
 BUILDDIR = build
-OBJECTS = utils CdCmd CmdBase NyuShell ExitCmd ShellStatus
+OBJECTS = utils CdCmd CmdBase NyuShell ExitCmd ShellStatus Job
 
 .PHONY: all
 all: nyush

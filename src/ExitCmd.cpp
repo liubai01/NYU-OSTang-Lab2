@@ -19,12 +19,10 @@ void ExitCmd::execCmd(const vector<string>& args)
 {
 	if(args.size() > 1){
 		cerr << "Error: invalid command" << endl;
-	}
-
-	if(status->hasSuspendedJob)
+	} else if (status->hasSuspendedJob)
 	{
 		cerr << "Error: there are suspended jobs" << endl;
+	} else {
+		exit(0);
 	}
-
-	exit(0);
 }

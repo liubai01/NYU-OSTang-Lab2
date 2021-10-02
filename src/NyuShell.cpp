@@ -2,6 +2,10 @@
 #include<iostream>
 #include <unistd.h>
 #include "utils.hpp"
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
 
 using namespace std;
 
@@ -17,8 +21,17 @@ NyuShell::NyuShell()
         mlt[c->cmd] = c;
     }
 
+    activeProcessNum = 0;
+
     // initialize status
     status.hasSuspendedJob = false;
+
+    // disable some signal
+    signal(SIGINT, [](int){});
+    signal(SIGQUIT, [](int){});
+    signal(SIGTERM, [](int){});
+    signal(SIGSTOP, [](int){});
+    signal(SIGTSTP, [](int){});
 }
 
 NyuShell::~NyuShell()
@@ -48,56 +61,127 @@ void NyuShell::serve()
         {
             f->second->execCmd(tokens);
         } else {
-            // check whether there are pipes
             vector<vector<string>> cmds = splitTokens(tokens, "|");
-            vector<string> args;
+            vector<Job> jobs(cmds.size());
+            vector<int> cleanUpList;
 
-            int n = (cmds.size() - 1) * 2;
-            int pipes[n];
-            for (int i = 0; i < n; ++i)
+            if (constrcutJobs(cmds, cleanUpList, jobs))
             {
-                pipe(pipes + i * 2);
+                continue;
             }
 
-            // exec outside commands
-            for (int i = 0; i < cmds.size(); ++i)
+            for (auto& j : jobs)
             {
-                args = cmds[i];
-
                 pid_t cpid = fork();
-
-                if (cpid == 0)
+                
+                if (cpid == (pid_t) - 1)
                 {
-                    // apply pipe
-                    if (i * 2 - 2 >= 0) {
-                        dup2(pipes[i * 2 - 2], 0);
-                    }
-                    if (i * 2 + 1 < n) {
-                        dup2(pipes[i * 2 + 1], 1);
-                    }
-                    for (int j = 0; j < n; ++j)
-                    {
-                        close(pipes[j]);
-                    }
-                    // parse input/output file redirection
-                    parseRedirFile(args);
-                    // execuate
-                    execute(args);
-                    // should not reach here
+                    cerr << "Fork failed" << endl;
+                    exit(1);
                 }
-                // register child's pid
-                cpids.insert(cpid);
-                status.hasSuspendedJob = cpids.size() > 0;
-            }
-            for (int j = 0; j < n; ++j)
-            {
-                close(pipes[j]);
-            }
 
+                if (cpid == 0) {
+                    j.exec(cleanUpList);
+                }
+                cpids.insert(cpid);
+            }
+            for(auto& i: cleanUpList)
+            {
+                close(i);
+            }
             waitUntilClear();
+           
         }
 
     }
+}
+
+
+bool NyuShell::constrcutJobs(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<Job>& jobs)
+{
+    // construct pipes
+    int n = (cmds.size() - 1) * 2;
+    int pipes[n];
+    for (int i = 0; i < n / 2; ++i)
+    {
+        pipe(pipes + i * 2);
+
+        cleanUpList.push_back(pipes[i * 2]);
+        cleanUpList.push_back(pipes[i * 2 + 1]);
+    }
+    vector<string> args;
+    // construct jobs
+    bool invalid = false;
+    for (int i = 0; i < cmds.size(); ++i)
+    {
+        args = cmds[i];
+        auto ptr = args.begin();
+
+        // check each arg to filter out file dir and pass to jobs
+        while(ptr != args.end())
+        {
+            // refer to: http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html
+            if (*ptr == ">")
+            {
+                if (ptr + 1 == args.end() || i + 1 < cmds.size())
+                {
+                    invalid = true;
+                    break;
+                }
+                const char* outputFileC = (++ptr)->c_str();
+                int out = open(outputFileC, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+                jobs[i].setOutDp(out);
+                cleanUpList.push_back(out);
+            } else if (*ptr == ">>") {
+                if (ptr + 1 == args.end() || i + 1 < cmds.size())
+                {
+                    invalid = true;
+                    break;
+                }
+                const char* outputFileC = (++ptr)->c_str();
+                int out = open(outputFileC, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+                jobs[i].setOutDp(out);
+                cleanUpList.push_back(out);
+            } else if (*ptr == "<") {
+                if (ptr + 1 == args.end() || i - 1 >= 0)
+                {
+                    invalid = true;
+                    break;
+                }
+                const char* inputFileC = (++ptr)->c_str();
+                int in = open(inputFileC, O_RDONLY);
+                jobs[i].setInDp(in);
+                cleanUpList.push_back(in);
+            } else if (ptr->find("<") != string::npos || ptr->find(">") != string::npos) {
+                invalid = true;
+                break;
+            } else {
+                jobs[i].args.push_back(*ptr);
+            }
+            ++ptr;
+        }
+
+        // apply pipe
+        if (i * 2 - 2 >= 0) {
+            jobs[i].setInDp(pipes[i * 2 - 2]);
+        }
+        if (i * 2 + 1 < n) {
+            jobs[i].setOutDp(pipes[i * 2 + 1]);
+        }
+
+        if (invalid)
+        {
+            break;
+        }
+    }
+
+    if (invalid)
+    {
+        cerr << "Error: invalid command" << endl;
+        return true;
+    }
+
+    return false;
 }
 
 vector<string> NyuShell::prompt()
@@ -112,7 +196,11 @@ vector<string> NyuShell::prompt()
 
     // prompt
     cout << "[nyush " << currDir << "]$: ";
-    getline(cin, cmd);
+    if(!getline(cin, cmd))
+    {
+        cout << endl;
+        cin.clear();
+    }
 
     if (cmd.length() == 0)
     {
@@ -131,17 +219,35 @@ void NyuShell::waitUntilClear()
     while (true) {
         // by reference to https://stackoverflow.com/questions/279729/how-to-wait-until-all-child-processes-called-by-fork-complete
         int status;
-        pid_t ret = wait(&status);
-        cpids.erase(ret);
-        this->status.hasSuspendedJob = cpids.size() > 0;
+        pid_t ret = waitpid(-1, &status, WCONTINUED | WUNTRACED);
+        
 
         if (ret == -1) {
             if (errno == ECHILD) break;
         } else {
-            if (WEXITSTATUS(status) != 0 || !WIFEXITED(status)) {
-                cerr << "pid " << ret << " failed" << endl;
-                // exit(1);
+
+            // if (WIFSTOPPED(status))
+            // {
+            //     --activeProcessNum;
+            // }
+
+            // if (WIFCONTINUED(status))
+            // {
+            //     ++activeProcessNum;
+            // }
+
+            if (WIFSIGNALED(status) || WIFEXITED(status))
+            {
+                cpids.erase(ret);
             }
+
+            // if (WEXITSTATUS(status) != 0 || !WIFEXITED(status)) {
+            //     cerr << "pid " << ret << " failed" << endl;
+            //     exit(1);
+            // }
+
+            this->status.hasSuspendedJob = cpids.size() > 0;
         }
+
     }
 }

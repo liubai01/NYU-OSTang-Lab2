@@ -20,9 +20,4 @@ int changedir(string path);
 // a cpp wrapper of execvp
 void execute(vector<string>& arglist);
 
-void parseRedirFile(vector<string>& args);
-
-void redirInputFile(string inputFile);
-void redirOutputFile(string outputFile, bool bAppend);
-
 #endif 
