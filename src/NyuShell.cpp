@@ -21,8 +21,6 @@ NyuShell::NyuShell()
         mlt[c->cmd] = c;
     }
 
-    activeProcessNum = 0;
-
     // initialize status
     status.hasSuspendedJob = false;
 
@@ -62,17 +60,18 @@ void NyuShell::serve()
             f->second->execCmd(tokens);
         } else {
             vector<vector<string>> cmds = splitTokens(tokens, "|");
-            vector<Job> jobs(cmds.size());
+            vector<SubProcess> subs(cmds.size());
             vector<int> cleanUpList;
 
-            if (constrcutJobs(cmds, cleanUpList, jobs))
+            if (constrcutSubProcess(cmds, cleanUpList, subs))
             {
                 continue;
             }
 
-            for (auto& j : jobs)
+            for (auto& j: subs)
             {
                 pid_t cpid = fork();
+                j.pid = cpid;
                 
                 if (cpid == (pid_t) - 1)
                 {
@@ -83,13 +82,18 @@ void NyuShell::serve()
                 if (cpid == 0) {
                     j.exec(cleanUpList);
                 }
-                cpids.insert(cpid);
+                status.registerSubProcess(j);
             }
             for(auto& i: cleanUpList)
             {
                 close(i);
             }
+
+
+            status.debugPrint();
             waitUntilClear();
+            cout << "After" << endl;
+            status.debugPrint();
            
         }
 
@@ -97,7 +101,7 @@ void NyuShell::serve()
 }
 
 
-bool NyuShell::constrcutJobs(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<Job>& jobs)
+bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<SubProcess>& subs)
 {
     // construct pipes
     int n = (cmds.size() - 1) * 2;
@@ -110,14 +114,14 @@ bool NyuShell::constrcutJobs(vector<vector<string>>& cmds, vector<int>& cleanUpL
         cleanUpList.push_back(pipes[i * 2 + 1]);
     }
     vector<string> args;
-    // construct jobs
+    // construct sub-process
     bool invalid = false;
     for (int i = 0; i < cmds.size(); ++i)
     {
         args = cmds[i];
         auto ptr = args.begin();
 
-        // check each arg to filter out file dir and pass to jobs
+        // check each arg to filter out file dir and pass to sub-process
         while(ptr != args.end())
         {
             // refer to: http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html
@@ -130,7 +134,7 @@ bool NyuShell::constrcutJobs(vector<vector<string>>& cmds, vector<int>& cleanUpL
                 }
                 const char* outputFileC = (++ptr)->c_str();
                 int out = open(outputFileC, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                jobs[i].setOutDp(out);
+                subs[i].setOutDp(out);
                 cleanUpList.push_back(out);
             } else if (*ptr == ">>") {
                 if (ptr + 1 == args.end() || i + 1 < cmds.size())
@@ -140,7 +144,7 @@ bool NyuShell::constrcutJobs(vector<vector<string>>& cmds, vector<int>& cleanUpL
                 }
                 const char* outputFileC = (++ptr)->c_str();
                 int out = open(outputFileC, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                jobs[i].setOutDp(out);
+                subs[i].setOutDp(out);
                 cleanUpList.push_back(out);
             } else if (*ptr == "<") {
                 if (ptr + 1 == args.end() || i - 1 >= 0)
@@ -150,23 +154,23 @@ bool NyuShell::constrcutJobs(vector<vector<string>>& cmds, vector<int>& cleanUpL
                 }
                 const char* inputFileC = (++ptr)->c_str();
                 int in = open(inputFileC, O_RDONLY);
-                jobs[i].setInDp(in);
+                subs[i].setInDp(in);
                 cleanUpList.push_back(in);
             } else if (ptr->find("<") != string::npos || ptr->find(">") != string::npos) {
                 invalid = true;
                 break;
             } else {
-                jobs[i].args.push_back(*ptr);
+                subs[i].args.push_back(*ptr);
             }
             ++ptr;
         }
 
         // apply pipe
         if (i * 2 - 2 >= 0) {
-            jobs[i].setInDp(pipes[i * 2 - 2]);
+            subs[i].setInDp(pipes[i * 2 - 2]);
         }
         if (i * 2 + 1 < n) {
-            jobs[i].setOutDp(pipes[i * 2 + 1]);
+            subs[i].setOutDp(pipes[i * 2 + 1]);
         }
 
         if (invalid)
@@ -238,15 +242,13 @@ void NyuShell::waitUntilClear()
 
             if (WIFSIGNALED(status) || WIFEXITED(status))
             {
-                cpids.erase(ret);
+                this->status.deleteSubProcess(ret);
             }
 
             // if (WEXITSTATUS(status) != 0 || !WIFEXITED(status)) {
             //     cerr << "pid " << ret << " failed" << endl;
             //     exit(1);
             // }
-
-            this->status.hasSuspendedJob = cpids.size() > 0;
         }
 
     }

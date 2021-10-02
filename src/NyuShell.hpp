@@ -7,7 +7,7 @@
 #include "cmd"
 #include <sys/wait.h>
 #include "ShellStatus.hpp"
-#include "Job.hpp"
+#include "SubProcess.hpp"
 
 using namespace std;
 
@@ -18,12 +18,8 @@ public:
     unordered_map<string, CmdBase*> mlt;
     // command handlers
     vector<CmdBase*> cmds;
-    // cpid list
-    unordered_set<pid_t> cpids;
     // shell status
     ShellStatus status;
-
-    int activeProcessNum;
 
     NyuShell();
     ~NyuShell();
@@ -33,7 +29,7 @@ public:
     // output prompt and parse the input
     vector<string> prompt();
 
-    bool constrcutJobs(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<Job>& jobs);
+    bool constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<SubProcess>& subs);
 
     // start the shell service
     void serve();
