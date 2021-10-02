@@ -12,7 +12,6 @@ NyuShell::NyuShell()
     // built-in command multiplexer initialization
     REGISTERSHELLCMD(CdCmd);
     REGISTERSHELLCMD(ExitCmd);
-
     for (auto& c: cmds)
     {
         mlt[c->cmd] = c;
@@ -31,32 +30,69 @@ NyuShell::~NyuShell()
 
 void NyuShell::serve()
 {
-	string cmd;
-    vector<string> args;
+    vector<string> tokens;
 
 	// main loop
     for(;;)
     {
-        args = prompt();
+        tokens = prompt();
 
-        if (args.size() == 0)
+        if (tokens.size() == 0)
         {
             continue;
         }
         
         // exec the built-in command
-        auto f = mlt.find(args[0]);
+        auto f = mlt.find(tokens[0]);
         if (f != mlt.end())
         {
-            f->second->execCmd(args);
+            f->second->execCmd(tokens);
         } else {
-        	// exec outside commands
+            // check whether there are pipes
+            vector<vector<string>> cmds = splitTokens(tokens, "|");
+            vector<string> args;
 
-            pid_t cpid = execute(args);
+            int n = (cmds.size() - 1) * 2;
+            int pipes[n];
+            for (int i = 0; i < n; ++i)
+            {
+                pipe(pipes + i * 2);
+            }
 
-            // register child's pid
-            cpids.insert(cpid);
-            status.hasSuspendedJob = cpids.size() > 0;
+            // exec outside commands
+            for (int i = 0; i < cmds.size(); ++i)
+            {
+                args = cmds[i];
+
+                pid_t cpid = fork();
+
+                if (cpid == 0)
+                {
+                    // apply pipe
+                    if (i * 2 - 2 >= 0) {
+                        dup2(pipes[i * 2 - 2], 0);
+                    }
+                    if (i * 2 + 1 < n) {
+                        dup2(pipes[i * 2 + 1], 1);
+                    }
+                    for (int j = 0; j < n; ++j)
+                    {
+                        close(pipes[j]);
+                    }
+                    // parse input/output file redirection
+                    parseRedirFile(args);
+                    // execuate
+                    execute(args);
+                    // should not reach here
+                }
+                // register child's pid
+                cpids.insert(cpid);
+                status.hasSuspendedJob = cpids.size() > 0;
+            }
+            for (int j = 0; j < n; ++j)
+            {
+                close(pipes[j]);
+            }
 
             waitUntilClear();
         }

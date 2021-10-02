@@ -13,12 +13,16 @@ string getMyCwd();
 // split the working directory / cmd into vector
 vector<string> splitStr(string s, string delimiter);
 
+vector<vector<string>> splitTokens(vector<string>& tokens, string delimiter);
+
 int changedir(string path);
 
 // a cpp wrapper of execvp
-pid_t execute(vector<string>& arglist);
+void execute(vector<string>& arglist);
 
-inline void redirInput(string inputFile);
-inline void redirOutput(string outputFile, bool bAppend);
+void parseRedirFile(vector<string>& args);
+
+void redirInputFile(string inputFile);
+void redirOutputFile(string outputFile, bool bAppend);
 
 #endif 

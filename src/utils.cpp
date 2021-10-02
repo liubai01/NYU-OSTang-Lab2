@@ -39,59 +39,78 @@ vector<string> splitStr(string s, string delimiter) {
     return ret;
 }
 
-pid_t execute(vector<string>& arglist)
+vector<vector<string>> splitTokens(vector<string>& tokens, string delimiter)
 {
-    pid_t c_pid = fork();
+    vector<vector<string>> ret;
+    vector<string> args;
 
-    if (c_pid == 0)
+    for (auto& a: tokens)
     {
-        int error;
-
-        // parse input/output redirection
-        while (arglist.size() >= 3)
+        if (a == delimiter)
         {
-            string lastSecond = arglist[arglist.size() - 2];
-
-            if(lastSecond == "<")
-            {
-                redirInput(arglist[arglist.size() - 1]);
-                arglist.pop_back();
-                arglist.pop_back();
-            } else if (lastSecond == ">") {
-                redirOutput(arglist[arglist.size() - 1], false);
-                arglist.pop_back();
-                arglist.pop_back();
-            } else if (lastSecond == ">>") {
-               redirOutput(arglist[arglist.size() - 1], true);
-                arglist.pop_back();
-                arglist.pop_back();
-            } else {
-                break;
-            }
-
+            ret.emplace_back(args);
+            args.clear();
+        } else {
+            args.push_back(a);
         }
-
-        const char* cmd = arglist[0].c_str();
-        // Remark: Note that the last element is nullptr as execvp required
-        char* args[arglist.size() + 1] = {nullptr};
-
-        for (int i = 0; i < arglist.size(); ++i) {
-            args[i] = const_cast<char*>(arglist[i].c_str());
-        }
-
-        // children process - execuate command
-        error = execvp(cmd, args);
-
-        if (error == -1) {
-             cout << "failed\n" << endl;
-        }
-        exit(1);
+    }
+    if (args.size() > 0)
+    {
+        ret.emplace_back(args);
     }
 
-    return c_pid;
+    return ret;
 }
 
-inline void redirInput(string inputFile)
+void execute(vector<string>& arglist)
+{
+    int error;
+
+    const char* cmd = arglist[0].c_str();
+    // Remark: Note that the last element is nullptr as execvp required
+    char* args[arglist.size() + 1] = {nullptr};
+
+    for (int i = 0; i < arglist.size(); ++i) {
+        args[i] = const_cast<char*>(arglist[i].c_str());
+    }
+
+    // children process - execuate command
+    error = execvp(cmd, args);
+
+    if (error == -1) {
+         cout << "failed" << endl;
+    }
+    exit(1);
+
+}
+
+void parseRedirFile(vector<string>& args)
+{
+    while (args.size() >= 3)
+    {
+        string lastSecond = args[args.size() - 2];
+
+        if(lastSecond == "<")
+        {
+            redirInputFile(args[args.size() - 1]);
+            args.pop_back();
+            args.pop_back();
+        } else if (lastSecond == ">") {
+            redirOutputFile(args[args.size() - 1], false);
+            args.pop_back();
+            args.pop_back();
+        } else if (lastSecond == ">>") {
+           redirOutputFile(args[args.size() - 1], true);
+            args.pop_back();
+            args.pop_back();
+        } else {
+            break;
+        }
+
+    }
+}
+
+void redirInputFile(string inputFile)
 {
     // refer to: http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html
     const char* inputFileC = inputFile.c_str();
@@ -100,7 +119,7 @@ inline void redirInput(string inputFile)
     close(in);
 }
 
-inline void redirOutput(string outputFile, bool bAppend)
+void redirOutputFile(string outputFile, bool bAppend)
 {
     // refer to: http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html
     const char* outputFileC = outputFile.c_str();
