@@ -12,10 +12,14 @@ using namespace std;
 class ShellStatus
 {
 public:
+    ShellStatus();
+
     list<SubProcess> subs;
     list<Job> jobs;
 
     bool hasSuspendedJob;
+
+    int activeProcessNum;
 
     void registerJob(Job& j);
 

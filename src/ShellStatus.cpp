@@ -1,5 +1,13 @@
 #include "ShellStatus.hpp"
 
+ShellStatus::ShellStatus()
+{
+    activeProcessNum = 0;
+    jobs.clear();
+    subs.clear();
+}
+
+
 void ShellStatus::registerJob(Job& j)
 {
     jobs.push_back(j);
@@ -9,6 +17,7 @@ void ShellStatus::registerJob(Job& j)
 void ShellStatus::registerSubProcess(SubProcess& s, Job& j)
 {
     s.parentJob = &j;
+    ++activeProcessNum;
 	subs.push_back(s);
 }
 
@@ -27,8 +36,11 @@ void ShellStatus::deleteSubProcess(pid_t pid)
                 jobs.erase(sobj.parentJob->listElem);
             }
             subs.erase(s);
+
+            --activeProcessNum;
             break;
         }
+        ++s;
     }
 }
 

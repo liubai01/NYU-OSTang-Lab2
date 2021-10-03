@@ -101,7 +101,6 @@ void NyuShell::serve()
 
             // status.debugPrint();
             status.printJobs();
-
             waitUntilClear();
             // cout << "After" << endl;
             // status.debugPrint();
@@ -230,28 +229,33 @@ vector<string> NyuShell::prompt(string& cmd)
 
 void NyuShell::waitUntilClear()
 {
-    while (true) {
+    while (this->status.activeProcessNum) {
         // by reference to https://stackoverflow.com/questions/279729/how-to-wait-until-all-child-processes-called-by-fork-complete
         int status;
+        cout << "activeNum: " << this->status.activeProcessNum << endl;
         pid_t ret = waitpid(-1, &status, WCONTINUED | WUNTRACED);
         
 
         if (ret == -1) {
+            // cout << "error" << endl;
             if (errno == ECHILD) break;
         } else {
 
-            // if (WIFSTOPPED(status))
-            // {
-            //     --activeProcessNum;
-            // }
+            if (WIFSTOPPED(status))
+            {
+                // cout << "stop" << endl;
+                --this->status.activeProcessNum;
+            }
 
-            // if (WIFCONTINUED(status))
-            // {
-            //     ++activeProcessNum;
-            // }
+            if (WIFCONTINUED(status))
+            {
+                // cout << "cont" << endl;
+                ++this->status.activeProcessNum;
+            }
 
             if (WIFSIGNALED(status) || WIFEXITED(status))
             {
+                // cout << "delete" << endl;
                 this->status.deleteSubProcess(ret);
             }
 
