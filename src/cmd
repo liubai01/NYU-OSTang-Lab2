@@ -3,5 +3,6 @@
 
 #include "CdCmd.hpp"
 #include "ExitCmd.hpp"
+#include "JobsCmd.hpp"
 
 #endif 

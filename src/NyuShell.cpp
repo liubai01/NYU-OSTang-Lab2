@@ -17,6 +17,8 @@ NyuShell::NyuShell()
     // built-in command multiplexer initialization
     REGISTERSHELLCMD(CdCmd);
     REGISTERSHELLCMD(ExitCmd);
+    REGISTERSHELLCMD(JobsCmd);
+    
     for (auto& c: cmds)
     {
         mlt[c->cmd] = c;
