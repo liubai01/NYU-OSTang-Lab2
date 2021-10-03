@@ -33,6 +33,8 @@ public:
     void debugPrint();
 
     void printJobs();
+
+    size_t allocateJobIdx();
 };
 
 #endif 

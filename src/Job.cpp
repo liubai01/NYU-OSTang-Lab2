@@ -6,6 +6,7 @@ Job::Job()
     activeSubNum = 0;
 
     lastPid = -1;
+    idx = -1;
 }
 
 void Job::debugPrint()

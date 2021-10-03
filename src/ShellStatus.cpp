@@ -1,5 +1,6 @@
 #include "ShellStatus.hpp"
 
+
 ShellStatus::ShellStatus()
 {
     activeJobNum = 0;
@@ -20,9 +21,21 @@ ShellStatus::~ShellStatus()
     }
 }
 
+size_t ShellStatus::allocateJobIdx()
+{
+    int nowMax = 0;
+    for (auto& j: jobs)
+    {
+        nowMax = max(nowMax, j->idx);
+    }
+
+    return nowMax + 1;
+}
+
 
 void ShellStatus::registerJob(Job* j)
 {
+    j->idx = allocateJobIdx();
     jobs.push_back(j);
     ++activeJobNum;
 }
@@ -48,7 +61,7 @@ void ShellStatus::stopSubProcess(pid_t pid)
         if (sptr->pid == pid)
         {
             --(sptr->parentJob->activeSubNum);
-            cout << "stop_activeSubProcess: " << sptr->parentJob->activeSubNum << endl;
+            
 
             if (sptr->parentJob->activeSubNum == 0)
             {
@@ -70,10 +83,7 @@ void ShellStatus::contSubProcess(pid_t pid)
         {   
             ++(sptr->parentJob->activeSubNum);
         if (sptr->pid == pid)
-            cout << "cont_activeSubProcess: " << sptr->parentJob->activeSubNum << endl;
-
             if (sptr->parentJob->activeSubNum == 1) {
-                cout << "++JobNum" << endl;
                 ++activeJobNum;
             }
             break;
@@ -99,7 +109,7 @@ void ShellStatus::deleteSubProcess(pid_t pid)
                 for (auto j = jobs.begin(); j != jobs.end(); ++j)
                 {
                     Job* jptr = *j;
-                    if (jptr->lastPid = sptr->parentJob->lastPid)
+                    if (jptr->lastPid == sptr->parentJob->lastPid)
                     {
                         jobs.erase(j);
                         delete jptr;
@@ -137,9 +147,8 @@ void ShellStatus::debugPrint()
 
 void ShellStatus::printJobs()
 {
-    int i = 0;
     for(auto& j: jobs)
     {
-        cout << "[" << ++i << "] " << j->cmd << endl;
+        cout << "[" << j->idx << "] " << j->cmd << endl;
     }
 }

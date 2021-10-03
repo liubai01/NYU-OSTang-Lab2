@@ -10,8 +10,9 @@ using namespace std;
 
 class Job {
 public:
-
     Job();
+
+    int idx;
 
     string cmd;
     pid_t lastPid; // pid for last subprocess
