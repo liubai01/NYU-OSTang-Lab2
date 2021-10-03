@@ -10,10 +10,14 @@ using namespace std;
 
 class Job {
 public:
-    string cmd;
-    int subnum;
 
-    list<Job>::iterator listElem;
+    Job();
+
+    string cmd;
+    pid_t lastPid; // pid for last subprocess
+
+    int aliveSubNum;
+    int activeSubNum;
 
     void debugPrint();
 };

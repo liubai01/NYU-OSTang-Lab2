@@ -13,18 +13,22 @@ class ShellStatus
 {
 public:
     ShellStatus();
+    ~ShellStatus();
 
-    list<SubProcess> subs;
-    list<Job> jobs;
+    list<SubProcess*> subs;
+    list<Job*> jobs;
 
     bool hasSuspendedJob;
 
-    int activeProcessNum;
+    int activeJobNum;
 
-    void registerJob(Job& j);
+    void registerJob(Job* j);
 
-    void registerSubProcess(SubProcess& s, Job& j);
+    void registerSubProcess(SubProcess* s, Job* j);
+
     void deleteSubProcess(pid_t pid);
+    void stopSubProcess(pid_t pid);
+    void contSubProcess(pid_t pid);
 
     void debugPrint();
 

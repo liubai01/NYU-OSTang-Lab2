@@ -29,7 +29,7 @@ public:
     // output prompt and parse the input
     vector<string> prompt(string& cmd);
 
-    bool constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<SubProcess>& subs);
+    bool constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<SubProcess*>& subs);
 
     // start the shell service
     void serve();

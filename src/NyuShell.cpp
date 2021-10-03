@@ -18,7 +18,8 @@ NyuShell::NyuShell()
     REGISTERSHELLCMD(CdCmd);
     REGISTERSHELLCMD(ExitCmd);
     REGISTERSHELLCMD(JobsCmd);
-    
+    REGISTERSHELLCMD(FgCmd);
+
     for (auto& c: cmds)
     {
         mlt[c->cmd] = c;
@@ -66,12 +67,11 @@ void NyuShell::serve()
             f->second->execCmd(tokens);
         } else {
             vector<vector<string>> cmds = splitTokens(tokens, "|");
-            vector<SubProcess> subs(cmds.size());
+            vector<SubProcess*> subs(cmds.size());
             vector<int> cleanUpList;
 
-            Job j;
-            j.cmd = cmd;
-            j.subnum = cmds.size();
+            Job* j = new Job();
+            j->cmd = cmd;
 
             if (constrcutSubProcess(cmds, cleanUpList, subs))
             {
@@ -81,7 +81,7 @@ void NyuShell::serve()
             for (auto& s: subs)
             {
                 pid_t cpid = fork();
-                s.pid = cpid;
+                s->pid = cpid;
                 
                 if (cpid == (pid_t) - 1)
                 {
@@ -90,7 +90,7 @@ void NyuShell::serve()
                 }
 
                 if (cpid == 0) {
-                    s.exec(cleanUpList);
+                    s->exec(cleanUpList);
                 }
                 status.registerSubProcess(s, j);
             }
@@ -103,17 +103,17 @@ void NyuShell::serve()
 
             // status.debugPrint();
             status.printJobs();
-            waitUntilClear();
             // cout << "After" << endl;
             // status.debugPrint();
            
         }
+        waitUntilClear();
 
     }
 }
 
 
-bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<SubProcess>& subs)
+bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cleanUpList, vector<SubProcess*>& subs)
 {
     // construct pipes
     int n = (cmds.size() - 1) * 2;
@@ -130,6 +130,7 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
     bool invalid = false;
     for (int i = 0; i < cmds.size(); ++i)
     {
+        subs[i] = new SubProcess();
         args = cmds[i];
         auto ptr = args.begin();
 
@@ -146,7 +147,7 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
                 }
                 const char* outputFileC = (++ptr)->c_str();
                 int out = open(outputFileC, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                subs[i].setOutDp(out);
+                subs[i]->setOutDp(out);
                 cleanUpList.push_back(out);
             } else if (*ptr == ">>") {
                 if (ptr + 1 == args.end() || i + 1 < cmds.size())
@@ -156,7 +157,7 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
                 }
                 const char* outputFileC = (++ptr)->c_str();
                 int out = open(outputFileC, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                subs[i].setOutDp(out);
+                subs[i]->setOutDp(out);
                 cleanUpList.push_back(out);
             } else if (*ptr == "<") {
                 if (ptr + 1 == args.end() || i - 1 >= 0)
@@ -166,23 +167,23 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
                 }
                 const char* inputFileC = (++ptr)->c_str();
                 int in = open(inputFileC, O_RDONLY);
-                subs[i].setInDp(in);
+                subs[i]->setInDp(in);
                 cleanUpList.push_back(in);
             } else if (ptr->find("<") != string::npos || ptr->find(">") != string::npos) {
                 invalid = true;
                 break;
             } else {
-                subs[i].args.push_back(*ptr);
+                subs[i]->args.push_back(*ptr);
             }
             ++ptr;
         }
 
         // apply pipe
         if (i * 2 - 2 >= 0) {
-            subs[i].setInDp(pipes[i * 2 - 2]);
+            subs[i]->setInDp(pipes[i * 2 - 2]);
         }
         if (i * 2 + 1 < n) {
-            subs[i].setOutDp(pipes[i * 2 + 1]);
+            subs[i]->setOutDp(pipes[i * 2 + 1]);
         }
 
         if (invalid)
@@ -231,10 +232,11 @@ vector<string> NyuShell::prompt(string& cmd)
 
 void NyuShell::waitUntilClear()
 {
-    while (this->status.activeProcessNum) {
+    cout << "===wait loop begin===" << endl;
+    while (this->status.activeJobNum) {
         // by reference to https://stackoverflow.com/questions/279729/how-to-wait-until-all-child-processes-called-by-fork-complete
         int status;
-        cout << "activeNum: " << this->status.activeProcessNum << endl;
+        cout << "activeJobNum: " << this->status.activeJobNum << endl;
         pid_t ret = waitpid(-1, &status, WCONTINUED | WUNTRACED);
         
 
@@ -245,19 +247,19 @@ void NyuShell::waitUntilClear()
 
             if (WIFSTOPPED(status))
             {
-                // cout << "stop" << endl;
-                --this->status.activeProcessNum;
+                cout << "stop: " << ret << endl;
+                this->status.stopSubProcess(ret);
             }
 
             if (WIFCONTINUED(status))
             {
-                // cout << "cont" << endl;
-                ++this->status.activeProcessNum;
+                cout << "cont: " << ret << endl;
+                this->status.contSubProcess(ret);
             }
 
             if (WIFSIGNALED(status) || WIFEXITED(status))
             {
-                // cout << "delete" << endl;
+                cout << "delete: " << ret << endl;
                 this->status.deleteSubProcess(ret);
             }
 
@@ -268,4 +270,5 @@ void NyuShell::waitUntilClear()
         }
 
     }
+    cout << "===wait loop end===" << endl;
 }
