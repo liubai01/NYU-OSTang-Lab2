@@ -25,9 +25,6 @@ NyuShell::NyuShell()
         mlt[c->cmd] = c;
     }
 
-    // initialize status
-    status.hasSuspendedJob = false;
-
     // disable some signal
     signal(SIGINT, [](int){});
     signal(SIGQUIT, [](int){});
@@ -102,7 +99,7 @@ void NyuShell::serve()
             status.registerJob(j);
 
             // status.debugPrint();
-            status.printJobs();
+            // status.printJobs();
             // cout << "After" << endl;
             // status.debugPrint();
            

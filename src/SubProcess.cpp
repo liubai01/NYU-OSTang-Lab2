@@ -12,6 +12,7 @@ SubProcess::SubProcess()
 	outDp = -1;
 
 	parentJob = nullptr;
+	active = true;
 	args.clear();
 }
 

@@ -18,8 +18,6 @@ public:
     list<SubProcess*> subs;
     list<Job*> jobs;
 
-    bool hasSuspendedJob;
-
     int activeJobNum;
 
     void registerJob(Job* j);

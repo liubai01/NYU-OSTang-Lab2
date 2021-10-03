@@ -60,9 +60,8 @@ void ShellStatus::stopSubProcess(pid_t pid)
         SubProcess* sptr = *s;
         if (sptr->pid == pid)
         {
+            sptr->active = false;
             --(sptr->parentJob->activeSubNum);
-            
-
             if (sptr->parentJob->activeSubNum == 0)
             {
                 --activeJobNum;
@@ -81,11 +80,11 @@ void ShellStatus::contSubProcess(pid_t pid)
         SubProcess* sptr = *s;
         if (sptr->pid == pid)
         {   
+            sptr->active = true;
             ++(sptr->parentJob->activeSubNum);
-        if (sptr->pid == pid)
-            if (sptr->parentJob->activeSubNum == 1) {
-                ++activeJobNum;
-            }
+            // if (sptr->parentJob->activeSubNum == 1) {
+            //     ++activeJobNum;
+            // }
             break;
         }
         ++s;

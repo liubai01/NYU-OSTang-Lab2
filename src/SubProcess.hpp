@@ -18,6 +18,8 @@ public:
     int outDp;
     pid_t pid;
 
+    bool active;
+
     Job* parentJob;
 
     vector<string> args;
