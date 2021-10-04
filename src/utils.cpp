@@ -54,10 +54,8 @@ vector<vector<string>> splitTokens(vector<string>& tokens, string delimiter)
             args.push_back(a);
         }
     }
-    if (args.size() > 0)
-    {
-        ret.emplace_back(args);
-    }
+
+    ret.emplace_back(args);
 
     return ret;
 }

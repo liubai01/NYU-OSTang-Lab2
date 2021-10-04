@@ -155,12 +155,18 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
     }
     vector<string> args;
     // construct sub-process
-    bool invalid = false;
     for (int i = 0; i < cmds.size(); ++i)
     {
         subs[i] = new SubProcess();
         args = cmds[i];
+        if (args.size() == 0)
+        {
+            cerr << "Error: invalid command" << endl;
+            return true;
+        }
         auto ptr = args.begin();
+
+        bool shouldTerm = false;
 
         // check each arg to filter out file dir and pass to sub-process
         while(ptr != args.end())
@@ -168,39 +174,59 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
             // refer to: http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html
             if (*ptr == ">")
             {
+                shouldTerm = true;
                 if (ptr + 1 == args.end() || i + 1 < cmds.size())
                 {
-                    invalid = true;
-                    break;
+                    cerr << "Error: invalid command" << endl;
+                    return true;
                 }
                 const char* outputFileC = (++ptr)->c_str();
                 int out = open(outputFileC, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                subs[i]->setOutDp(out);
+                if(!subs[i]->setOutDp(out))
+                {
+                    cerr << "Error: invalid command" << endl;
+                    return true;
+                }
                 cleanUpList.push_back(out);
             } else if (*ptr == ">>") {
+                shouldTerm = true;
                 if (ptr + 1 == args.end() || i + 1 < cmds.size())
                 {
-                    invalid = true;
-                    break;
+                    cerr << "Error: invalid command" << endl;
+                    return true;
                 }
                 const char* outputFileC = (++ptr)->c_str();
                 int out = open(outputFileC, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                subs[i]->setOutDp(out);
+                if (!subs[i]->setOutDp(out))
+                {
+                    cerr << "Error: invalid command" << endl;
+                    return true;
+                }
                 cleanUpList.push_back(out);
             } else if (*ptr == "<") {
+                shouldTerm = true;
                 if (ptr + 1 == args.end() || i - 1 >= 0)
                 {
-                    invalid = true;
-                    break;
+                    cerr << "Error: invalid command" << endl;
+                    return true;
                 }
                 const char* inputFileC = (++ptr)->c_str();
                 int in = open(inputFileC, O_RDONLY);
-                subs[i]->setInDp(in);
+                if(!subs[i]->setInDp(in))
+                {
+                    cerr << "Error: invalid command" << endl;
+                    return true;
+                }
                 cleanUpList.push_back(in);
             } else if (ptr->find("<") != string::npos || ptr->find(">") != string::npos) {
-                invalid = true;
-                break;
+                cerr << "Error: invalid command" << endl;
+                return true;
             } else {
+                if (shouldTerm)
+                {
+                    cerr << "Error: invalid command" << endl;
+                    return true;
+                }
                 subs[i]->args.push_back(*ptr);
             }
             ++ptr;
@@ -214,17 +240,8 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
             subs[i]->setOutDp(pipes[i * 2 + 1]);
         }
 
-        if (invalid)
-        {
-            break;
-        }
     }
 
-    if (invalid)
-    {
-        cerr << "Error: invalid command" << endl;
-        return true;
-    }
 
     return false;
 }
