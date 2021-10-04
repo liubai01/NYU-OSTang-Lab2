@@ -58,7 +58,7 @@ void ShellStatus::stopSubProcess(pid_t pid)
     while(s != subs.end())
     {
         SubProcess* sptr = *s;
-        if (sptr->pid == pid)
+        if (sptr->active && sptr->pid == pid)
         {
             sptr->active = false;
             --(sptr->parentJob->activeSubNum);

@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 SubProcess::SubProcess()
 {
@@ -13,6 +14,7 @@ SubProcess::SubProcess()
 
 	parentJob = nullptr;
 	active = true;
+	first = false;
 	args.clear();
 }
 
@@ -40,6 +42,16 @@ bool SubProcess::setOutDp(int dp)
 
 void SubProcess::exec(vector<int>& closeList)
 {
+    signal(SIGINT, SIG_DFL);
+    signal(SIGQUIT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
+    signal(SIGSTOP, SIG_DFL);
+    signal(SIGTSTP, SIG_DFL);
+
+    // refer to: https://drustz.com/posts/2015/09/29/step-by-step-shell2/
+    // signal(SIGTTIN, SIG_DFL);
+    signal(SIGTTOU, SIG_DFL);
+
     // apply pipe
     if (inDp != -1)
     {
@@ -58,6 +70,7 @@ void SubProcess::exec(vector<int>& closeList)
 
     // execuate
     execute(args);
+  	exit (1);
 }
 
 string SubProcess::getInfo()

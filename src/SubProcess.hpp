@@ -17,7 +17,9 @@ public:
     int inDp;
     int outDp;
     pid_t pid;
+    pid_t pgid;
 
+    bool first;
     bool active;
 
     Job* parentJob;

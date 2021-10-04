@@ -39,7 +39,10 @@ void FgCmd::execCmd(const vector<string>& args)
 			if(!s->active && s->parentJob->idx == idx)
 			{
 				kill(s->pid, SIGCONT);
-				++s->parentJob->activeSubNum;
+				if(s->first)
+				{
+					tcsetpgrp(STDIN_FILENO, s->pgid);
+				}
 			}
 		}
 		++status->activeJobNum;	
