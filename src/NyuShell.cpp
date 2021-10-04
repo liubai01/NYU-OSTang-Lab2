@@ -31,6 +31,15 @@ NyuShell::NyuShell()
     signal(SIGTERM, [](int){});
     signal(SIGSTOP, [](int){});
     signal(SIGTSTP, [](int){});
+
+    // refer to: https://drustz.com/posts/2015/09/29/step-by-step-shell2/
+    signal(SIGTTIN, [](int){});
+    signal(SIGTTOU, [](int){});
+
+    ppid = getpid();
+    setpgid (ppid, ppid);
+
+    foreground = STDIN_FILENO;
 }
 
 NyuShell::~NyuShell()
@@ -63,6 +72,8 @@ void NyuShell::serve()
         {
             f->second->execCmd(tokens);
         } else {
+            int pgid = -1;
+            bool firstp = true;
             vector<vector<string>> cmds = splitTokens(tokens, "|");
             vector<SubProcess*> subs(cmds.size());
             vector<int> cleanUpList;
@@ -78,18 +89,34 @@ void NyuShell::serve()
             for (auto& s: subs)
             {
                 pid_t cpid = fork();
-                s->pid = cpid;
-                
+
                 if (cpid == (pid_t) - 1)
                 {
                     cerr << "Fork failed" << endl;
                     exit(1);
                 }
 
-                if (cpid == 0) {
-                    s->exec(cleanUpList);
+                if (pgid == -1)
+                {
+                    pgid = getpid();
                 }
-                status.registerSubProcess(s, j);
+
+                if (cpid == 0) {
+                    setpgid(getpid(), pgid);
+                    s->exec(cleanUpList);
+                    // should not reach here
+                } else {
+                    if (firstp)
+                    {
+                        firstp = false;
+                        setpgid(cpid, pgid);
+                        tcsetpgrp(foreground, cpid);
+                    }
+
+                    s->pid = cpid;
+                    status.registerSubProcess(s, j);
+                }
+
             }
             for(auto& i: cleanUpList)
             {
@@ -229,11 +256,11 @@ vector<string> NyuShell::prompt(string& cmd)
 
 void NyuShell::waitUntilClear()
 {
-    // cout << "===wait loop begin===" << endl;
+    cout << "===wait loop begin===" << endl;
     while (this->status.activeJobNum) {
         // by reference to https://stackoverflow.com/questions/279729/how-to-wait-until-all-child-processes-called-by-fork-complete
         int status;
-        // cout << "activeJobNum: " << this->status.activeJobNum << endl;
+        cout << "activeJobNum: " << this->status.activeJobNum << endl;
         pid_t ret = waitpid(-1, &status, WCONTINUED | WUNTRACED);
         
 
@@ -243,18 +270,22 @@ void NyuShell::waitUntilClear()
         } else {
 
             if (WIFSTOPPED(status))
-            {
+            {  
+                // cout << "stop: " << ret << endl;
                 this->status.stopSubProcess(ret);
             }
 
             if (WIFCONTINUED(status))
             {
+                // cout << "cont: " << ret << endl;
                 this->status.contSubProcess(ret);
             }
 
             if (WIFSIGNALED(status) || WIFEXITED(status))
             {
+                cout << "signaled exited: " << ret << endl;
                 this->status.deleteSubProcess(ret);
+                
             }
 
             // if (WEXITSTATUS(status) != 0 || !WIFEXITED(status)) {
@@ -264,5 +295,10 @@ void NyuShell::waitUntilClear()
         }
 
     }
-    // cout << "===wait loop end===" << endl;
+    cout << "===wait loop end===" << endl;
+    if (tcsetpgrp(foreground, ppid))
+    {
+        cerr << "failed" << endl;
+    }
+    cout << "===wait loop end===" << endl;
 }

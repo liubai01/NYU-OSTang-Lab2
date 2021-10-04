@@ -21,6 +21,9 @@ public:
     // shell status
     ShellStatus status;
 
+    int foreground;
+    pid_t ppid;
+
     NyuShell();
     ~NyuShell();
 
