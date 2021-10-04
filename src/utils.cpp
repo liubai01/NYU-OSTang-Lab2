@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <fstream>
 
 string getMyCwd() 
 {
@@ -60,9 +61,32 @@ vector<vector<string>> splitTokens(vector<string>& tokens, string delimiter)
     return ret;
 }
 
+bool checkIfExists(const string& path)
+{
+    ifstream ifile;
+    ifile.open(path);
+    if(ifile) {
+        return true;
+    }
+    return false;
+}
+
 void execute(vector<string>& arglist)
 {
     int error;
+
+    string cmdcpp = arglist[0];
+    char firstChar = cmdcpp[0];
+    if (firstChar != '/' || firstChar != '.') {
+        if(checkIfExists("/bin/" + cmdcpp)) {
+            arglist[0] = "/bin/" + cmdcpp;
+        } else if (checkIfExists("/usr/bin/" + cmdcpp)) {
+            arglist[0] = "/usr/bin/" + cmdcpp;
+        } else {
+            cerr << "Error: invalid program" << endl;
+            exit(1);
+        }
+    }
 
     const char* cmd = arglist[0].c_str();
     // Remark: Note that the last element is nullptr as execvp required
@@ -76,7 +100,7 @@ void execute(vector<string>& arglist)
     error = execvp(cmd, args);
 
     if (error == -1) {
-         cerr << "Error: invalid command" << endl;
+         cerr << "Error: invalid program" << endl;
     }
     exit(1);
 
