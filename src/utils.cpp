@@ -77,7 +77,9 @@ void execute(vector<string>& arglist)
 
     string cmdcpp = arglist[0];
     char firstChar = cmdcpp[0];
-    if (firstChar != '/' || firstChar != '.') {
+    bool containSlash = cmdcpp.find("/") != string::npos;
+
+    if (firstChar != '/' && !containSlash) {
         if(checkIfExists("/bin/" + cmdcpp)) {
             arglist[0] = "/bin/" + cmdcpp;
         } else if (checkIfExists("/usr/bin/" + cmdcpp)) {
