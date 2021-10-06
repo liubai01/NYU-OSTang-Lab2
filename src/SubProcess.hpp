@@ -9,6 +9,10 @@
 
 using namespace std;
 
+#define WRITEF 1
+#define APPENDF 2
+#define READF 3
+#define OTHERF 0
 
 class SubProcess {
 public:
@@ -16,8 +20,16 @@ public:
 
     int inDp;
     int outDp;
+
+    int inDpMode;
+    int outDpMode;
+
     pid_t pid;
     pid_t pgid;
+
+    string inPath;
+    string outPath;
+
 
     bool first;
     bool active;
@@ -31,8 +43,8 @@ public:
     string getInfo();
     void debugPrint();
 
-    bool setInDp(int dp);
-    bool setOutDp(int dp);
+    bool setInDp(int dp, string filePath, int mode);
+    bool setOutDp(int dp, string filePath, int mode);
 };
 
 #endif 

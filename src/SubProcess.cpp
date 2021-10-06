@@ -12,13 +12,16 @@ SubProcess::SubProcess()
 	inDp = -1;
 	outDp = -1;
 
+	inDpMode = OTHERF;
+	outDpMode = OTHERF;
+
 	parentJob = nullptr;
 	active = true;
 	first = false;
 	args.clear();
 }
 
-bool SubProcess::setInDp(int dp)
+bool SubProcess::setInDp(int dp, string filePath, int mode)
 {
 	if (inDp != -1)
 	{
@@ -26,10 +29,12 @@ bool SubProcess::setInDp(int dp)
 	}
 
 	inDp = dp;
+	inPath = filePath;
+	inDpMode = mode;
 	return true;
 }
 
-bool SubProcess::setOutDp(int dp)
+bool SubProcess::setOutDp(int dp, string filePath, int mode)
 {
 	if (outDp != -1)
 	{
@@ -37,6 +42,8 @@ bool SubProcess::setOutDp(int dp)
 	}
 
 	outDp = dp;
+	outPath = filePath;
+	outDpMode = mode;
 	return true;
 }
 
@@ -55,11 +62,27 @@ void SubProcess::exec(vector<int>& closeList)
     // apply pipe
     if (inDp != -1)
     {
+	   if (inDpMode == READF)
+        {
+            const char* inputFileC = inPath.c_str();
+            inDp = open(inputFileC, O_RDONLY);
+            closeList.push_back(inDp);
+        }
         dup2(inDp, 0);
     }
 
     if (outDp != -1)
     {
+        if (outDpMode == WRITEF)
+        {
+            const char* outputFileC = outPath.c_str();
+            outDp = open(outputFileC, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+            closeList.push_back(outDp);
+        } else if (outDpMode == APPENDF) {
+            const char* outputFileC = outPath.c_str();
+            outDp = open(outputFileC, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+            closeList.push_back(outDp);
+        }
         dup2(outDp, 1);
     }
 

@@ -180,14 +180,11 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
                     cerr << "Error: invalid command" << endl;
                     return true;
                 }
-                const char* outputFileC = (++ptr)->c_str();
-                int out = open(outputFileC, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                if(!subs[i]->setOutDp(out))
+                if(!subs[i]->setOutDp(0, *++ptr, WRITEF))
                 {
                     cerr << "Error: invalid command" << endl;
                     return true;
                 }
-                cleanUpList.push_back(out);
             } else if (*ptr == ">>") {
                 shouldTerm = true;
                 if (ptr + 1 == args.end() || i + 1 < cmds.size())
@@ -195,14 +192,11 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
                     cerr << "Error: invalid command" << endl;
                     return true;
                 }
-                const char* outputFileC = (++ptr)->c_str();
-                int out = open(outputFileC, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
-                if (!subs[i]->setOutDp(out))
+                if (!subs[i]->setOutDp(0, *++ptr, APPENDF))
                 {
                     cerr << "Error: invalid command" << endl;
                     return true;
                 }
-                cleanUpList.push_back(out);
             } else if (*ptr == "<") {
                 shouldTerm = true;
                 if (ptr + 1 == args.end() || i - 1 >= 0)
@@ -210,14 +204,11 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
                     cerr << "Error: invalid command" << endl;
                     return true;
                 }
-                const char* inputFileC = (++ptr)->c_str();
-                int in = open(inputFileC, O_RDONLY);
-                if(!subs[i]->setInDp(in))
+                if(!subs[i]->setInDp(0, *++ptr, READF))
                 {
                     cerr << "Error: invalid command" << endl;
                     return true;
                 }
-                cleanUpList.push_back(in);
             } else if (ptr->find("<") != string::npos || ptr->find(">") != string::npos) {
                 cerr << "Error: invalid command" << endl;
                 return true;
@@ -234,10 +225,10 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
 
         // apply pipe
         if (i * 2 - 2 >= 0) {
-            subs[i]->setInDp(pipes[i * 2 - 2]);
+            subs[i]->setInDp(pipes[i * 2 - 2], "", OTHERF);
         }
         if (i * 2 + 1 < n) {
-            subs[i]->setOutDp(pipes[i * 2 + 1]);
+            subs[i]->setOutDp(pipes[i * 2 + 1], "", OTHERF);
         }
 
     }
