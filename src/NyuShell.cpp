@@ -92,7 +92,7 @@ void NyuShell::serve()
 
                 if (cpid == (pid_t) - 1)
                 {
-                    cerr << "Fork failed" << endl;
+                    // cerr << "Fork failed" << endl;
                     exit(1);
                 }
 
@@ -317,6 +317,6 @@ void NyuShell::waitUntilClear()
     }
     if (tcsetpgrp(foreground, ppid))
     {
-        cerr << "failed" << endl;
+        // cerr << "failed" << endl;
     }
 }
