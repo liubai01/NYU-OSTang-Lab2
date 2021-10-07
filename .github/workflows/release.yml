@@ -11,6 +11,7 @@ jobs:
       - name: Build
         run:  make
       - name: Package
+        if: startsWith(github.ref, 'refs/tags/')
         run: make package
       - name: Release
         uses: softprops/action-gh-release@v1
