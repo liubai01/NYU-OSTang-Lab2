@@ -16,6 +16,9 @@ nyush.o: $(SOURCEDIR)/nyush.cpp
 %.o: $(SOURCEDIR)/%.cpp $(SOURCEDIR)/%.hpp
 	$(CC) -c -o $(BUILDDIR)/$@ $< $(CFLAGS)
 
-.PHONY: clean
+.PHONY: clean package
 clean:
-	rm -f $(BUILDDIR)/*.o nyush
+	rm -f $(BUILDDIR)/*.o nyush nyush-yx2412.tar.xz
+
+package:
+	tar cJf nyush-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src

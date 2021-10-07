@@ -51,4 +51,7 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Project
 nyush
+bin/
+*.tar.xz
