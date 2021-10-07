@@ -248,9 +248,8 @@ vector<string> NyuShell::prompt(string& cmd)
 
     // prompt
     cout << "[nyush " << currDir << "]$: ";
-    if(!getline(cin, cmd))
+    while(!getline(cin, cmd))
     {
-        cout << endl;
         cin.clear();
     }
 
