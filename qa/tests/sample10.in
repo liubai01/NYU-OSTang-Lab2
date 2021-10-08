@@ -1,3 +1,0 @@
-CMD&&&cd tests/testDir
-CMD&&&/bin/ls > output.txt
-CMD&&&exit

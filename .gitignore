@@ -55,4 +55,3 @@ dkms.conf
 nyush
 bin/
 *.tar.xz
-*.err

@@ -1,4 +1,0 @@
-CMD&&&cd tests/testDir
-CMD&&&hello
-CMD&&&./hello
-CMD&&&exit

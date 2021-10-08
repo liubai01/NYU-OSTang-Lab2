@@ -1,3 +1,0 @@
-CMD&&&cd tests/testDir
-CMD&&&ls -a
-CMD&&&exit
