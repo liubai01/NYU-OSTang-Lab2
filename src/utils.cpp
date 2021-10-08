@@ -28,13 +28,20 @@ vector<string> splitStr(string s, string delimiter) {
     auto end = s.find(delimiter);
     while (end != std::string::npos)
     {
-        ret.push_back(s.substr(start, end - start));
+        if (end - start > 0)
+        {
+            ret.push_back(s.substr(start, end - start));
+        }
+        
         start = end + delimiter.length();
         end = s.find(delimiter, start);
     }
     if (start < s.length())
     {
-        ret.push_back(s.substr(start, s.length() - start + 1));
+        if (s.length() - start + 1 > 0)
+        {
+            ret.push_back(s.substr(start, s.length() - start + 1));
+        }
     }
 
     return ret;
@@ -81,9 +88,9 @@ void execute(vector<string>& arglist)
 
     if (!containSlash) {
         if(checkIfExists("/bin/" + cmdcpp)) {
-            arglist[0] = "/bin/" + cmdcpp;
+            // arglist[0] = "/bin/" + cmdcpp;
         } else if (checkIfExists("/usr/bin/" + cmdcpp)) {
-            arglist[0] = "/usr/bin/" + cmdcpp;
+            // arglist[0] = "/usr/bin/" + cmdcpp;
         } else {
             cerr << "Error: invalid program" << endl;
             exit(1);

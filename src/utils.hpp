@@ -20,4 +20,7 @@ int changedir(string path);
 // a cpp wrapper of execvp
 void execute(vector<string>& arglist);
 
+// check whether exists
+bool checkIfExists(const string& path);
+
 #endif 

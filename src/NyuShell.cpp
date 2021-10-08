@@ -75,6 +75,7 @@ void NyuShell::serve()
         } else {
             int pgid = -1;
             vector<vector<string>> cmds = splitTokens(tokens, "|");
+
             vector<SubProcess*> subs(cmds.size());
             vector<int> cleanUpList;
 
@@ -159,7 +160,7 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
     {
         subs[i] = new SubProcess();
         args = cmds[i];
-        if (args.size() == 0)
+        if (args.size() == 0 || args.size() == 1 && args[0].size() == 0)
         {
             cerr << "Error: invalid command" << endl;
             return true;
@@ -174,6 +175,7 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
             // refer to: http://www.cs.loyola.edu/~jglenn/702/S2005/Examples/dup2.html
             if (*ptr == ">")
             {
+                // output logic
                 shouldTerm = true;
                 if (ptr + 1 == args.end() || i + 1 < cmds.size())
                 {
@@ -186,6 +188,7 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
                     return true;
                 }
             } else if (*ptr == ">>") {
+                // append logic
                 shouldTerm = true;
                 if (ptr + 1 == args.end() || i + 1 < cmds.size())
                 {
@@ -198,13 +201,19 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
                     return true;
                 }
             } else if (*ptr == "<") {
+                // read logic
                 shouldTerm = true;
                 if (ptr + 1 == args.end() || i - 1 >= 0)
                 {
                     cerr << "Error: invalid command" << endl;
                     return true;
                 }
-                if(!subs[i]->setInDp(0, *++ptr, READF))
+                if (!checkIfExists(*++ptr))
+                {
+                    cerr << "Error: invalid file" << endl;
+                    return true;
+                }
+                if(!subs[i]->setInDp(0, *ptr, READF))
                 {
                     cerr << "Error: invalid command" << endl;
                     return true;
@@ -247,10 +256,12 @@ vector<string> NyuShell::prompt(string& cmd)
     string currDir = cwdTokens[cwdTokens.size() - 1];
 
     // prompt
-    cout << "[nyush " << currDir << "]$: ";
-    while(!getline(cin, cmd))
+    cout << "[nyush " << currDir << "]$ ";
+
+    if(!getline(cin, cmd))
     {
-        cin.clear();
+        cout << endl;
+        exit(0);
     }
 
     if (cmd.length() == 0)
