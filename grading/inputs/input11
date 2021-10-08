@@ -1,0 +1,3 @@
+cat < input2.txt > output.txt
+cat < input.txt | cat | cat > output.txt
+cat < output.txt

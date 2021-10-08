@@ -1,0 +1,30 @@
+[nyush grading]$ srv
+proc
+initrd.img.old
+vmlinuz.old
+swapfile
+usr
+.
+lib64
+lib
+tmp
+lost+found
+boot
+initrd.img
+media
+etc
+var
+sys
+run
+cdrom
+bin
+vmlinuz
+opt
+sbin
+home
+root
+dev
+snap
+mnt
+..
+[nyush grading]$ 

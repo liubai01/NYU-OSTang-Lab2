@@ -1,0 +1,3 @@
+cat < append.txt >> output.txt
+cat < append.txt >> output.txt
+cat < output.txt
