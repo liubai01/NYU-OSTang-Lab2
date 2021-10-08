@@ -1,0 +1,5 @@
+[nyush qa]$: [nyush testDir]$: dummy.txt
+hello
+hello.cpp
+input.txt
+[nyush testDir]$: 

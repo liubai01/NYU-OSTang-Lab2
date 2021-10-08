@@ -1,0 +1,4 @@
+CMD&&&cd tests/testDir
+CMD&&&cat < input.txt | cat | cat > output.txt
+CMD&&&cat output.txt
+CMD&&&exit

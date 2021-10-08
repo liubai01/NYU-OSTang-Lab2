@@ -1,0 +1,3 @@
+CMD&&&cd tests/testDir
+CMD&&&cat input.txt | grep Rain | less
+CMD&&&exit

@@ -16,9 +16,12 @@ nyush.o: $(SOURCEDIR)/nyush.cpp
 %.o: $(SOURCEDIR)/%.cpp $(SOURCEDIR)/%.hpp
 	$(CC) -c -o $(BUILDDIR)/$@ $< $(CFLAGS)
 
-.PHONY: clean package
+.PHONY: clean package test
 clean:
 	rm -f $(BUILDDIR)/*.o nyush nyush-yx2412.tar.xz
 
 package:
 	tar cJf nyush-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src
+
+test:
+	python3 qa/Lab2QA.py

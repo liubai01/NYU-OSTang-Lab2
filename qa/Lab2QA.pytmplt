@@ -1,0 +1,141 @@
+
+class Test{name}{idx}(unittest.TestCase):
+
+    def constructRef(self):
+        myinput = open('./tests/sample{idx}.in')
+        myoutput = open('./tests/sample{idx}.ref', 'w')
+        myerr = open('./tests/sample{idx}.errref', 'w')
+
+        p = subprocess.Popen(
+            ["../nyush"],
+            stdin=subprocess.PIPE,
+            stdout=myoutput,
+            stderr=myerr
+        )
+        try:
+            for l in myinput.readlines():
+                header, body = l.split("&&&")
+                if header == "CMD":
+                    p.stdin.write(body.encode())
+                    p.stdin.flush()
+                elif header == 'WAIT':
+                    time.sleep(1)
+                elif header == 'SHORTWAIT':
+                    time.sleep(0.2)
+                elif header == 'STOP':
+                    p.send_signal(signal.SIGTSTP)
+                elif header == 'INT':
+                    p.send_signal(signal.SIGINT)
+                elif header == 'SIGS':
+                    p.send_signal(signal.SIGINT)
+                    p.send_signal(signal.SIGQUIT)
+                    p.send_signal(signal.SIGTERM)
+                    p.send_signal(signal.SIGTSTP)
+            p.stdin.close()
+            p.wait(1)
+            myoutput.flush()
+            myerr.flush()
+
+            myinput.close()
+            myoutput.close()
+            myerr.close()
+            try:
+                os.kill(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+            if os.path.exists("./tests/testDir/output.txt"):
+                os.system("rm ./tests/testDir/output.txt")
+
+        except subprocess.TimeoutExpired:
+            try:
+                os.kill(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            myinput.close()
+            myoutput.close()
+            myerr.close()
+            self.fail(msg="Test{idx} {name} construct standard output fail!")
+
+    def setUp(self):
+        self.succeed = False
+        if {construct}:
+            self.constructRef()
+
+    def test(self):
+
+        myinput = open('./tests/sample{idx}.in')
+        myoutput = open('./tests/sample{idx}.out', 'w')
+        myerr = open('./tests/sample{idx}.err', 'w')
+
+        p = subprocess.Popen(
+            ["../nyush"],
+            stdin=subprocess.PIPE,
+            stdout=myoutput,
+            stderr=myerr
+        )
+        try:
+            for l in myinput.readlines():
+                header, body = l.split("&&&")
+                if header == "CMD":
+                    p.stdin.write(body.encode())
+                    p.stdin.flush()
+                elif header == 'WAIT':
+                    time.sleep(1)
+                elif header == 'SHORTWAIT':
+                    time.sleep(0.2)
+                elif header == 'STOP':
+                    p.send_signal(signal.SIGTSTP)
+                elif header == 'INT':
+                    p.send_signal(signal.SIGINT)
+                elif header == 'SIGS':
+                    p.send_signal(signal.SIGINT)
+                    p.send_signal(signal.SIGQUIT)
+                    p.send_signal(signal.SIGTERM)
+                    p.send_signal(signal.SIGTSTP)
+            p.stdin.close()
+            p.wait(1)
+            myoutput.flush()
+            myerr.flush()
+
+            myinput.close()
+            myoutput.close()
+            myerr.close()
+            self.assertTrue(filecmp.cmp(
+                './tests/sample{idx}.out', 
+                './tests/sample{idx}.ref'),
+                msg="Test{idx} {name} stdout differs from expectation!"
+            )
+            self.assertTrue(filecmp.cmp(
+                './tests/sample{idx}.err', 
+                './tests/sample{idx}.errref'),
+                msg="Test{idx} {name} stderr differs from expectation!"
+            )
+            try:
+                os.kill(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            self.succeed = True
+
+        except subprocess.TimeoutExpired:
+            try:
+                os.kill(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+            myinput.close()
+            myoutput.close()
+            myerr.close()
+            self.fail(msg="Test{idx} {name} time out!")
+
+
+    def tearDown(self):
+        # os.system("rm ./tests/*.out")
+        if self.succeed:
+            logging.info("Test {idx}-{name} succeeded!")
+        else:
+            logging.info("Test {idx}-{name} failed!")
+
+        if os.path.exists("./tests/testDir/output.txt"):
+            os.system("rm ./tests/testDir/output.txt")
+        pass
