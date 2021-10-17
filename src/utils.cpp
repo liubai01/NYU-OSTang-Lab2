@@ -82,21 +82,6 @@ void execute(vector<string>& arglist)
 {
     int error;
 
-    string cmdcpp = arglist[0];
-    char firstChar = cmdcpp[0];
-    bool containSlash = cmdcpp.find("/") != string::npos;
-
-    if (!containSlash) {
-        if(checkIfExists("/bin/" + cmdcpp)) {
-            // arglist[0] = "/bin/" + cmdcpp;
-        } else if (checkIfExists("/usr/bin/" + cmdcpp)) {
-            // arglist[0] = "/usr/bin/" + cmdcpp;
-        } else {
-            cerr << "Error: invalid program" << endl;
-            exit(1);
-        }
-    }
-
     const char* cmd = arglist[0].c_str();
     // Remark: Note that the last element is nullptr as execvp required
     char* args[arglist.size() + 1] = {nullptr};

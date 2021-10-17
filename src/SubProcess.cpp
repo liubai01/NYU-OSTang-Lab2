@@ -59,11 +59,40 @@ void SubProcess::exec(vector<int>& closeList)
     // signal(SIGTTIN, SIG_DFL);
     signal(SIGTTOU, SIG_DFL);
 
+    string cmd = args[0];
+    bool containSlash = cmd.find("/") != string::npos;
+
+    if (!containSlash) {
+        if (checkIfExists("/bin/" + cmd)) {
+            // args[0] = "/bin/" + cmd;
+        } else if (checkIfExists("/usr/bin/" + cmd)) {
+            // args[0] = "/usr/bin/" + cmd;
+        } else {
+            cerr << "Error: invalid program" << endl;
+            exit(1);
+        }
+    } else {
+        if (!checkIfExists(cmd))
+        {
+            cerr << "Error: invalid program" << endl;
+            exit(1);
+        }
+    }
+
     // apply pipe
     if (inDp != -1)
     {
 	   if (inDpMode == READF)
         {
+            if (!checkIfExists(inPath))
+            {
+                cerr << "Error: invalid file" << endl;
+                for (auto& i: closeList)
+                {
+                    close(i);
+                }
+                exit(1);
+            }
             const char* inputFileC = inPath.c_str();
             inDp = open(inputFileC, O_RDONLY);
             closeList.push_back(inDp);
@@ -93,7 +122,7 @@ void SubProcess::exec(vector<int>& closeList)
 
     // execuate
     execute(args);
-  	exit (1);
+  	exit(1);
 }
 
 string SubProcess::getInfo()

@@ -208,12 +208,7 @@ bool NyuShell::constrcutSubProcess(vector<vector<string>>& cmds, vector<int>& cl
                     cerr << "Error: invalid command" << endl;
                     return true;
                 }
-                if (!checkIfExists(*++ptr))
-                {
-                    cerr << "Error: invalid file" << endl;
-                    return true;
-                }
-                if(!subs[i]->setInDp(0, *ptr, READF))
+                if(!subs[i]->setInDp(0, *++ptr, READF))
                 {
                     cerr << "Error: invalid command" << endl;
                     return true;

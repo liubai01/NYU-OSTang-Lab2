@@ -19,6 +19,9 @@ nyush.o: $(SOURCEDIR)/nyush.cpp
 .PHONY: clean package
 clean:
 	rm -f $(BUILDDIR)/*.o nyush nyush-yx2412.tar.xz
+	rm -f grading/*.txt
+	rm -rf grading/myoutputs
+	rm -rf grading/directory
 
 package:
 	tar cJf nyush-yx2412.tar.xz Makefile build/DONOTREMOVEDIR src
